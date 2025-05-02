@@ -1,0 +1,246 @@
+<!-- File: spm-progress-tracker.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SPM 2025 Tracker</title>
+<style>
+body {
+font-family: "Segoe UI", sans-serif;
+background: #fff8f0;
+color: #333;
+margin: 0;
+padding: 0 1rem;
+}
+header {
+text-align: center;
+padding: 1.5rem;
+background-color: #ffe5ec;
+border-bottom: 4px solid #ffc0cb;
+}
+.countdown {
+font-size: 1.5rem;
+font-weight: bold;
+color: #c9184a;
+}
+.subject {
+background: #fff;
+margin: 1rem 0;
+padding: 1rem;
+border-radius: 10px;
+border-left: 6px solid #ffd6dc;
+box-shadow: 0 0 10px #fce4ec80;
+}
+.subject h2 {
+margin: 0 0 0.5rem;
+}
+.grade {
+font-weight: bold;
+color: #b23a48;
+}
+.chapter-list {
+list-style: none;
+padding-left: 0;
+}
+.chapter-item {
+margin: 0.5rem 0;
+position: relative;
+cursor: pointer;
+}
+.chapter-item input {
+margin-right: 1rem;
+}
+.chapter-label {
+background-color: #fbe4e8;
+padding: 0.4rem 0.8rem;
+border-radius: 20px;
+display: inline-block;
+max-width: 90%;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+transition: max-width 0.3s;
+}
+.chapter-item:hover .chapter-label,
+.chapter-item input:checked + .chapter-label {
+white-space: normal;
+max-width: 100%;
+}
+.progress {
+margin: 1rem 0;
+}
+.progress-bar {
+height: 20px;
+background: #fce1e7;
+border-radius: 20px;
+overflow: hidden;
+}
+.progress-fill {
+height: 100%;
+background: #fa7298;
+width: 0%;
+transition: width 0.4s ease-in-out;
+}
+</style>
+</head>
+<body>
+<header>
+<h1>SPM 2025 Progress Tracker</h1>
+<div class="countdown" id="countdown"></div>
+</header>
+
+<main id="tracker"></main>
+
+<script>
+const subjects = {
+"Kimia": {
+"Tingkatan 4": [
+"Struktur Atom", "Formula Kimia dan Persamaan Kimia", "Jadual Berkala Unsur",
+"Ikatan Kimia", "Asid, Bes dan Garam", "Kadar Tindak Balas", "Aloi"
+],
+"Tingkatan 5": [
+"Keseimbangan Redoks", "Sebatian Karbon", "Termokimia", "Polimer", "Kimia Konsumer dan Industri"
+]
+},
+"Biologi": {
+"Tingkatan 4": [
+"Biologi Sel dan Organisasi Sel", "Pergerakan Bahan Merentasi Membran Plasma", "Komposisi Kimia dalam Sel",
+"Metabolisme dan Enzim", "Pembahagian Sel", "Respirasi Sel", "Sistem Respirasi dalam Manusia dan Haiwan",
+"Nutrisi dan Sistem Pencernaan Manusia", "Pengangkutan dalam Manusia dan Haiwan", "Keimunan Manusia",
+"Koordinasi dan Gerak Balas dalam Manusia", "Homeostasis dan Sistem Urinari Manusia", "Sokongan dan Pergerakan dalam Manusia dan Haiwan",
+"Pembiakan Seks, Perkembangan dan Pertumbuhan dalam Manusia dan Haiwan"
+],
+"Tingkatan 5": [
+"Organisasi Tisu Tumbuhan dan Pertumbuhan", "Struktur dan Fungsi Daun", "Nutrisi dalam Tumbuhan",
+"Pengangkutan dalam Tumbuhan", "Gerak Balas dalam Tumbuhan", "Pembiakan Seks dalam Tumbuhan Berbunga",
+"Penyesuaian Tumbuhan pada Habitat", "Biodiversiti", "Ekosistem", "Kelestarian Alam Sekitar",
+"Pewarisan", "Variasi", "Teknologi Genetik"
+]
+},
+"Fizik": {
+"Tingkatan 4": [
+"Pengukuran", "Daya dan Gerakan I", "Kegravitian", "Haba", "Gelombang", "Cahaya dan Optik"
+],
+"Tingkatan 5": [
+"Daya dan Gerakan II", "Tekanan", "Elektrik", "Keelektromagnetan", "Elektronik", "Fizik Nuklear", "Fizik Kuantum"
+]
+},
+"Matematik Tambahan": {
+"Tingkatan 4": [
+"Fungsi", "Fungsi Kuadratik", "Sistem Persamaan", "Indeks, Surd dan Logaritma",
+"Janjang", "Hukum Linear", "Geometri Koordinat", "Vektor", "Penyelesaian Segi Tiga", "Nombor Indeks"
+],
+"Tingkatan 5": [
+"Sukatan Membulat", "Pembezaan", "Pengamiran", "Pilih Atur dan Gabungan",
+"Taburan Kebarangkalian", "Fungsi Trigonometri", "Pengaturcaraan Linear", "Kinematik Gerakan Linear"
+]
+}
+};
+
+const trackerEl = document.getElementById("tracker");
+
+function createSubjectSection(subject, grades) {
+let total = 0;
+let checked = 0;
+const wrapper = document.createElement("section");
+wrapper.className = "subject";
+
+const title = document.createElement("h2");
+title.textContent = subject + " ";
+wrapper.appendChild(title);
+
+Object.entries(grades).forEach(([grade, chapters]) => {
+const subtitle = document.createElement("div");
+subtitle.className = "grade";
+subtitle.textContent = grade;
+wrapper.appendChild(subtitle);
+
+const list = document.createElement("ul");
+list.className = "chapter-list";
+
+chapters.forEach((chapter, index) => {
+const id = `${subject}-${grade}-${index}`;
+const li = document.createElement("li");
+li.className = "chapter-item";
+
+const checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+checkbox.id = id;
+
+// Load from localStorage
+if (localStorage.getItem(id) === "true") {
+checkbox.checked = true;
+checked++;
+}
+
+checkbox.addEventListener("change", () => {
+localStorage.setItem(id, checkbox.checked);
+updateProgress();
+});
+
+const label = document.createElement("label");
+label.htmlFor = id;
+label.className = "chapter-label";
+label.textContent = chapter;
+
+li.appendChild(checkbox);
+li.appendChild(label);
+list.appendChild(li);
+total++;
+});
+
+wrapper.appendChild(list);
+});
+
+const progress = document.createElement("div");
+progress.className = "progress";
+
+const bar = document.createElement("div");
+bar.className = "progress-bar";
+
+const fill = document.createElement("div");
+fill.className = "progress-fill";
+fill.style.width = `${(checked / total) * 100}%`;
+
+bar.appendChild(fill);
+progress.appendChild(bar);
+wrapper.appendChild(progress);
+
+wrapper.dataset.total = total;
+wrapper.dataset.subject = subject;
+
+trackerEl.appendChild(wrapper);
+}
+
+function updateProgress() {
+const sections = document.querySelectorAll(".subject");
+sections.forEach(section => {
+const total = parseInt(section.dataset.total);
+const inputs = section.querySelectorAll("input[type='checkbox']");
+const checked = Array.from(inputs).filter(i => i.checked).length;
+const fill = section.querySelector(".progress-fill");
+fill.style.width = `${(checked / total) * 100}%`;
+});
+}
+
+function startCountdown() {
+const countdownEl = document.getElementById("countdown");
+const examDate = new Date("2025-11-18");
+setInterval(() => {
+const now = new Date();
+const diff = examDate - now;
+const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+const mins = Math.floor((diff / (1000 * 60)) % 60);
+countdownEl.textContent = `Countdown to SPM: ${days}d ${hours}h ${mins}m`;
+}, 1000);
+}
+
+startCountdown();
+Object.entries(subjects).forEach(([subject, grades]) =>
+createSubjectSection(subject, grades)
+);
+updateProgress();
+</script>
+</body>
+</html>
